@@ -13,10 +13,10 @@ public class App {
         System.out.println("请输入你的密码：");
         String psd = sc.nextLine();
         // 上海大学
-        // List<JSONObject> res = SHU.getCourse(name, psd);
+         List<JSONObject> res = SHU.getCourse(name, psd);
 
         //青岛大学
-        QU.getCourse(name, psd);
-//        System.out.println(res);
+//        QU.getCourse(name, psd);
+        System.out.println(res);
     }
 }

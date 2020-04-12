@@ -24,39 +24,37 @@ public class SHU {
         List<JSONObject> course = new ArrayList<>();
         JSONObject courseItem = new JSONObject();
         try {
+            Document doc;
             System.out.println("正在登录.....");
-            Connection connect = Jsoup.connect("https://oauth.shu.edu.cn/oauth/authorize?response_type=code&client_id=yRQLJfUsx326fSeKNUCtooKw&redirect_uri=http://cj.shu.edu.cn/passport/return&state=");
-            Document doc = connect.get();
+            Connection.Response connect = Jsoup.connect("https://oauth.shu.edu.cn/oauth/authorize?response_type=code&client_id=yRQLJfUsx326fSeKNUCtooKw&redirect_uri=http://cj.shu.edu.cn/passport/return&state=").execute();
 
-            Elements ele = doc.body().select("input[name]");
-
-            Connection.Response res = Jsoup.connect("https://sso.shu.edu.cn/idp/profile/SAML2/POST/SSO")
-                    .data("SAMLRequest", ele.get(0).attr("value"), "RelayState", ele.get(1).attr("value"))
-                    .method(Connection.Method.POST).timeout(10000).execute();
             Map<String, String> user_password = new HashMap<String, String>();
-            user_password.put("j_username", number);
-            user_password.put("j_password", psd);
+            user_password.put("username", number);
+            user_password.put("password", psd);
+            user_password.put("login_submit", "登录/Login");
 
-            doc = Jsoup.connect("https://sso.shu.edu.cn/idp/Authn/UserPassword")
+            Connection.Response connect1 = Jsoup.connect("https://oauth.shu.edu.cn/login")
                     .data(user_password)
-                    .cookies(res.cookies())
-                    .post();
-            ele = doc.body().select("input[name]");
-
-            Connection.Response res2 = Jsoup.connect("http://oauth.shu.edu.cn/oauth/Shibboleth.sso/SAML2/POST")
-                    .data("SAMLResponse", ele.get(1).attr("value"), "RelayState", ele.get(0).attr("value"))
+                    .cookies(connect.cookies()).followRedirects(false)
                     .method(Connection.Method.POST).timeout(10000).execute();
+            System.out.println(connect1.header("location"));
+            Connection.Response connect2 = Jsoup.connect("https://oauth.shu.edu.cn/oauth/authorize")
+                    .cookies(connect.cookies()).followRedirects(false)
+                    .method(Connection.Method.GET).timeout(10000).execute();
+            Connection.Response connect3 = Jsoup.connect(connect2.header("location"))
+                    .cookies(connect.cookies()).followRedirects(false)
+                    .method(Connection.Method.GET).timeout(10000).execute();
             System.out.println("登录成功！");
             System.out.println("正在获取课表.....");
             doc = Jsoup.connect("http://cj.shu.edu.cn/StudentPortal/StudentSchedule")
                     .data("studentNo", number)
-                    .cookies(res2.cookies())
+                    .cookies(connect3.cookies())
                     .post();
             Elements term = doc.body().select("option");
             String academicTermID = term.last().attr("value");
             Element coursePage = Jsoup.connect("http://cj.shu.edu.cn/StudentPortal/CtrlStudentSchedule")
                     .data("academicTermID", academicTermID)
-                    .cookies(res2.cookies())
+                    .cookies(connect3.cookies())
                     .post()
                     .body();
             Elements ele2 = coursePage.select("tr");

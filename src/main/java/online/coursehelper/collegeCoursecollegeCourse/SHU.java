@@ -22,7 +22,6 @@ import java.util.Map;
 public class SHU {
     public static List<JSONObject> getCourse(String number, String psd) {
         List<JSONObject> course = new ArrayList<>();
-        JSONObject courseItem = new JSONObject();
         try {
             Document doc;
             System.out.println("正在登录.....");
@@ -59,9 +58,10 @@ public class SHU {
                     .body();
             Elements ele2 = coursePage.select("tr");
             for (int i = 2; i < ele2.size(); i++) {
+                JSONObject courseItem = new JSONObject();
                 Elements items = ele2.get(i).getElementsByTag("td");
                 if(items.size() < 8){
-                    break;
+                    continue;
                 }
                 courseItem.put("课程编号", items.get(0).text());
                 courseItem.put("课程名称", items.get(1).text());
